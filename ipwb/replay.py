@@ -34,11 +34,14 @@ from six.moves.urllib_parse import urlsplit, urlunsplit
 from requests.exceptions import HTTPError
 
 from . import util as ipwb_utils
+from . import settings
 from .backends import get_web_archive_index
 from .exceptions import IPFSDaemonNotAvailable
 from .util import unsurt, ipfs_client
-from .util import IPWBREPLAY_HOST, IPWBREPLAY_PORT
-from .util import INDEX_FILE
+
+IPWBREPLAY_HOST = settings.App.config("replay_host")
+IPWBREPLAY_PORT = settings.App.config("replay_port")
+INDEX_FILE = settings.App.config("index") 
 
 from . import indexer
 
@@ -695,7 +698,7 @@ def show_uri(path, datetime=None):
             else:
                 ask_for_key = ('Enter a path for file',
                                ' containing decryption key: \n> ')
-                key_string = raw_input(ask_for_key)
+                key_string = input(ask_for_key)
 
         padded_encryption_key = pad(key_string, AES.block_size)
         key = base64.b64encode(padded_encryption_key)
@@ -1050,11 +1053,7 @@ def get_cdxj_line_binarySearch(
 
 
 def start(cdxj_file_path, proxy=None):
-    host_port = ipwb_utils.get_ipwb_replay_config()
     app.proxy = proxy
-
-    if not host_port:
-        ipwb_utils.set_ipwb_replay_config(IPWBREPLAY_HOST, IPWBREPLAY_PORT)
 
     # This will throw an exception if daemon is not available.
     ipwb_utils.check_daemon_is_alive()

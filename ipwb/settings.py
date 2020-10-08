@@ -42,9 +42,12 @@ logging_config.dictConfig(LOGGING)
 
 class App:
     __conf = {
-        "ipfsapi": IPFSAPI_MUTLIADDRESS
+        "ipfsapi": IPFSAPI_MUTLIADDRESS,
+        "replay_host": "localhost",
+        "replay_port": 5000, 
+        "index": os.path.join('samples', 'indexes', 'salam-home.cdxj')
     }
-    __setters = ["ipfsapi"]
+    __setters = ["ipfsapi", "replay_host", "replay_port", "index"]
 
     @staticmethod
     def config(name):

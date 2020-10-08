@@ -29,13 +29,6 @@ from .exceptions import IPFSDaemonNotAvailable
 logger = logging.getLogger(__name__)
 
 
-IPWBREPLAY_ADDRESS = 'localhost:5000'
-
-(IPWBREPLAY_HOST, IPWBREPLAY_PORT) = IPWBREPLAY_ADDRESS.split(':')
-IPWBREPLAY_PORT = int(IPWBREPLAY_PORT)
-
-INDEX_FILE = os.path.join('samples', 'indexes', 'salam-home.cdxj')
-
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
@@ -217,33 +210,6 @@ def fetch_remote_file(path):
         ) from err
 
 
-# IPFS Config manipulation from here on out.
-def read_ipfs_config():
-    ipfs_config_path = os.path.join(expanduser("~"), '.ipfs', 'config')
-    if 'IPFS_PATH' in os.environ:
-        ipfs_config_path = os.path.join(
-            os.environ.get('IPFS_PATH'), 'config')
-
-    try:
-        with open(ipfs_config_path, 'r') as f:
-            return json.load(f)
-
-    except IOError as err:
-        raise Exception(
-            'IPFS config not found. Have you installed ipfs and run ipfs init?'
-        ) from err
-
-
-def write_ipfs_config(json_to_write):
-    ipfs_config_path = os.path.join(expanduser("~"), '.ipfs', 'config')
-    if 'IPFS_PATH' in os.environ:
-        ipfs_config_path = os.path.join(
-            os.environ.get('IPFS_PATH'), 'config')
-
-    with open(ipfs_config_path, 'w') as f:
-        f.write(json.dumps(json_to_write, indent=4, sort_keys=True))
-
-
 def get_ipfsapi_host_and_port():
     daemon_address = settings.App.config("ipfsapi")
     # format right now is "/dns/localhost/tcp/5001/http"
@@ -256,47 +222,27 @@ def get_ipfsapi_host_and_port():
         return host + ':' + port
 
 
-def get_ipwb_replay_config(ipfs_json=None):
-    if not ipfs_json:
-        ipfs_json = read_ipfs_config()
-    port = None
-    if ('Ipwb' in ipfs_json and 'Replay' in ipfs_json['Ipwb'] and
-       'Port' in ipfs_json['Ipwb']['Replay']):
-        host = ipfs_json['Ipwb']['Replay']['Host']
-        port = ipfs_json['Ipwb']['Replay']['Port']
-        return (host, port)
-    else:
-        return None
+def get_ipwb_replay_config():
+   host = settings.App.config("replay_host")
+   port = settings.App.config("replay_port")
+   return (host, port)
 
 
-def set_ipwb_replay_config(Host, Port, ipfs_json=None):
-    if not ipfs_json:
-        ipfs_json = read_ipfs_config()
-    ipfs_json['Ipwb'] = {}
-    ipfs_json['Ipwb']['Replay'] = {
-      u'Host': Host,
-      u'Port': Port
-    }
-    write_ipfs_config(ipfs_json)
-
+def set_ipwb_replay_config(Host, Port):
+    # This function isn't used
+    # TODO: add CLI argument to utilize this 
+    settings.App.set("replay_host", Host)
+    settings.App.set("replay_port", Port)
 
 def set_ipwb_replay_index_path(cdxj):
-    if cdxj is None:
-        cdxj = INDEX_FILE
-    ipfs_json = read_ipfs_config()
-    ipfs_json['Ipwb']['Replay']['Index'] = cdxj
-    write_ipfs_config(ipfs_json)
+    if cdxj is not None:
+        settings.App.set("index", cdxj)
     return
 
 
 def get_ipwb_replay_index_path():
-    ipfs_json = read_ipfs_config()
-    if 'Ipwb' not in ipfs_json:
-        set_ipwb_replay_config(IPWBREPLAY_HOST, IPWBREPLAY_PORT)
-        ipfs_json = read_ipfs_config()
-
-    if 'Index' in ipfs_json['Ipwb']['Replay']:
-        return ipfs_json['Ipwb']['Replay']['Index']
+    if settings.App.config("index"):
+        return settings.App.config("index")
     else:
         return ''
 
